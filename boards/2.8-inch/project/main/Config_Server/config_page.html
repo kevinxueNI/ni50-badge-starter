@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>NI Badge Config</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#1a1a2e;color:#fff;padding:16px;min-height:100vh}
+h1{text-align:center;font-size:20px;margin:12px 0;color:#f5c518}
+.card{background:#16213e;border-radius:12px;padding:16px;margin-bottom:16px}
+.card h2{font-size:14px;color:#888;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+label{display:block;font-size:13px;color:#aaa;margin:8px 0 4px}
+input[type=text]{width:100%;padding:10px;border:1px solid #333;border-radius:8px;background:#0f3460;color:#fff;font-size:15px}
+input[type=text]:focus{outline:none;border-color:#f5c518}
+.upload-area{border:2px dashed #333;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s}
+.upload-area:hover{border-color:#f5c518}
+.upload-area.has-file{border-color:#4caf50;border-style:solid}
+.upload-area p{color:#666;font-size:13px;margin-top:6px}
+.preview{max-width:120px;max-height:120px;border-radius:8px;margin-top:8px}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-top:12px;transition:opacity .2s}
+.btn-primary{background:#f5c518;color:#1a1a2e}
+.btn-primary:active{opacity:.7}
+.status{text-align:center;padding:8px;font-size:13px;border-radius:6px;margin-top:8px;display:none}
+.status.ok{display:block;background:#1b5e20;color:#a5d6a7}
+.status.err{display:block;background:#b71c1c;color:#ef9a9a}
+.hint{font-size:11px;color:#666;text-align:center;margin-top:16px}
+</style>
+</head>
+<body>
+<h1>NI Badge Config</h1>
+
+<div class="card">
+<h2>Profile</h2>
+<label for="inp-name">Name</label>
+<input type="text" id="inp-name" maxlength="60" placeholder="Your name">
+<label for="inp-dept">Department</label>
+<input type="text" id="inp-dept" maxlength="120" placeholder="Department / Title">
+<button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+<div id="status-profile" class="status"></div>
+</div>
+
+<div class="card">
+<h2>Avatar (Page 0)</h2>
+<div class="upload-area" id="drop-avatar" onclick="document.getElementById('file-avatar').click()">
+<div>📷 Tap to select image</div>
+<p>88×88 recommended, JPG/PNG</p>
+<img class="preview" id="prev-avatar" style="display:none">
+</div>
+<input type="file" id="file-avatar" accept="image/*" style="display:none" onchange="previewFile(this,'avatar')">
+<button class="btn btn-primary" onclick="uploadImage('avatar')">Upload Avatar</button>
+<div id="status-avatar" class="status"></div>
+</div>
+
+<div class="card">
+<h2>Cartoon (Page 2)</h2>
+<div class="upload-area" id="drop-cartoon" onclick="document.getElementById('file-cartoon').click()">
+<div>🎨 Tap to select image</div>
+<p>240×320 recommended, JPG/PNG</p>
+<img class="preview" id="prev-cartoon" style="display:none">
+</div>
+<input type="file" id="file-cartoon" accept="image/*" style="display:none" onchange="previewFile(this,'cartoon')">
+<button class="btn btn-primary" onclick="uploadImage('cartoon')">Upload Cartoon</button>
+<div id="status-cartoon" class="status"></div>
+</div>
+
+<p class="hint">Changes take effect after badge restart.<br>WiFi: NI-Badge / ni502026</p>
+
+<div class="card">
+<h2>Clock / 时间设置</h2>
+<div id="current-time" style="font-size:18px;color:#f5c518;margin-bottom:10px;font-family:monospace">--:--:--</div>
+<button class="btn btn-primary" onclick="syncTimeFromPhone()" style="margin-top:0;margin-bottom:8px">Sync from Phone 同步手机时间</button>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+<input type="number" id="t-year" placeholder="Year" min="2025" max="2099" style="width:70px;padding:8px;border:1px solid #333;border-radius:6px;background:#0f3460;color:#fff;font-size:13px">
+<input type="number" id="t-month" placeholder="Mon" min="1" max="12" style="width:52px;padding:8px;border:1px solid #333;border-radius:6px;background:#0f3460;color:#fff;font-size:13px">
+<input type="number" id="t-day" placeholder="Day" min="1" max="31" style="width:52px;padding:8px;border:1px solid #333;border-radius:6px;background:#0f3460;color:#fff;font-size:13px">
+<input type="number" id="t-hour" placeholder="Hr" min="0" max="23" style="width:48px;padding:8px;border:1px solid #333;border-radius:6px;background:#0f3460;color:#fff;font-size:13px">
+<input type="number" id="t-min" placeholder="Min" min="0" max="59" style="width:48px;padding:8px;border:1px solid #333;border-radius:6px;background:#0f3460;color:#fff;font-size:13px">
+<input type="number" id="t-sec" placeholder="Sec" min="0" max="59" style="width:48px;padding:8px;border:1px solid #333;border-radius:6px;background:#0f3460;color:#fff;font-size:13px">
+</div>
+<button class="btn btn-primary" onclick="setTimeManual()">Set Manual 手动设置</button>
+<div id="status-time" class="status"></div>
+</div>
+
+<script>
+// Load current profile on page load
+fetch('/api/profile').then(r=>r.json()).then(d=>{
+  document.getElementById('inp-name').value=d.name||'';
+  document.getElementById('inp-dept').value=d.dept||'';
+}).catch(()=>{});
+
+function showStatus(id,ok,msg){
+  var el=document.getElementById(id);
+  el.className='status '+(ok?'ok':'err');
+  el.textContent=msg;
+  el.style.display='block';
+  setTimeout(()=>{el.style.display='none'},3000);
+}
+
+function saveProfile(){
+  var name=document.getElementById('inp-name').value.trim();
+  var dept=document.getElementById('inp-dept').value.trim();
+  if(!name){showStatus('status-profile',false,'Name required');return}
+  var body='name='+encodeURIComponent(name)+'&dept='+encodeURIComponent(dept);
+  fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
+    .then(r=>r.json())
+    .then(d=>{if(d.ok)showStatus('status-profile',true,'Saved!');else showStatus('status-profile',false,'Error')})
+    .catch(()=>showStatus('status-profile',false,'Network error'));
+}
+
+function previewFile(input,type){
+  var file=input.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=document.getElementById('prev-'+type);
+    img.src=e.target.result;
+    img.style.display='block';
+    document.getElementById('drop-'+type).classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+}
+
+function uploadImage(type){
+  var input=document.getElementById('file-'+type);
+  var file=input.files[0];
+  if(!file){showStatus('status-'+type,false,'Select an image first');return}
+
+  // Resize image to target dimensions, convert to RGB565 raw binary
+  var canvas=document.createElement('canvas');
+  var ctx=canvas.getContext('2d');
+  var img=new Image();
+  img.onload=function(){
+    var tw=type==='avatar'?88:240;
+    var th=type==='avatar'?88:320;
+    canvas.width=tw;canvas.height=th;
+    // Crop-center and resize
+    var scale=Math.max(tw/img.width,th/img.height);
+    var sw=tw/scale,sh=th/scale;
+    var sx=(img.width-sw)/2,sy=(img.height-sh)/2;
+    ctx.drawImage(img,sx,sy,sw,sh,0,0,tw,th);
+    var imgData=ctx.getImageData(0,0,tw,th);
+    // Convert to RGB565 little-endian
+    var pixels=imgData.data;
+    var rgb565=new Uint8Array(tw*th*2);
+    for(var i=0;i<tw*th;i++){
+      var r=pixels[i*4],g=pixels[i*4+1],b=pixels[i*4+2];
+      var c=((r&0xF8)<<8)|((g&0xFC)<<3)|((b&0xF8)>>3);
+      rgb565[i*2]=c&0xFF;
+      rgb565[i*2+1]=(c>>8)&0xFF;
+    }
+    // Upload raw binary
+    fetch('/api/upload?type='+type,{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:rgb565})
+      .then(r=>r.json())
+      .then(d=>{if(d.ok)showStatus('status-'+type,true,'Uploaded! Restart badge to apply.');else showStatus('status-'+type,false,'Error')})
+      .catch(()=>showStatus('status-'+type,false,'Network error'));
+  };
+  img.src=URL.createObjectURL(file);
+}
+
+// Time management
+function loadTime(){
+  fetch('/api/time').then(r=>r.json()).then(d=>{
+    document.getElementById('current-time').textContent=
+      d.year+'-'+String(d.month).padStart(2,'0')+'-'+String(d.day).padStart(2,'0')+' '+
+      String(d.hour).padStart(2,'0')+':'+String(d.minute).padStart(2,'0')+':'+String(d.second).padStart(2,'0');
+  }).catch(()=>{document.getElementById('current-time').textContent='Read failed'});
+}
+loadTime();
+setInterval(loadTime,5000);
+
+function syncTimeFromPhone(){
+  var now=new Date();
+  var body='year='+now.getFullYear()+'&month='+(now.getMonth()+1)+'&day='+now.getDate()+
+           '&hour='+now.getHours()+'&minute='+now.getMinutes()+'&second='+now.getSeconds();
+  fetch('/api/time',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
+    .then(r=>r.json())
+    .then(d=>{if(d.ok){showStatus('status-time',true,'Synced!');loadTime();}else showStatus('status-time',false,'Error')})
+    .catch(()=>showStatus('status-time',false,'Network error'));
+}
+
+function setTimeManual(){
+  var y=document.getElementById('t-year').value;
+  var m=document.getElementById('t-month').value;
+  var d=document.getElementById('t-day').value;
+  var h=document.getElementById('t-hour').value;
+  var mi=document.getElementById('t-min').value;
+  var s=document.getElementById('t-sec').value;
+  if(!y||!m||!d||!h){showStatus('status-time',false,'Fill at least year/month/day/hour');return}
+  var body='year='+y+'&month='+m+'&day='+d+'&hour='+(h||0)+'&minute='+(mi||0)+'&second='+(s||0);
+  fetch('/api/time',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
+    .then(r=>r.json())
+    .then(d=>{if(d.ok){showStatus('status-time',true,'Time set!');loadTime();}else showStatus('status-time',false,'Error')})
+    .catch(()=>showStatus('status-time',false,'Network error'));
+}
+</script>
+</body>
+</html>

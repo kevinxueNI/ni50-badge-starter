@@ -1,0 +1,15 @@
+# Local build artifacts
+boards/*/project/build/
+boards/*/project/managed_components/
+
+# VS Code and caches
+.vscode/
+**/__pycache__/
+*.pyc
+
+# Local logs and temp files
+*.log
+build_log.txt
+flash_log.txt
+Thumbs.db
+.DS_Store

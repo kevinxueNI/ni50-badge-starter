@@ -1,0 +1,10 @@
+#ifndef VERSION_H
+#define VERSION_H
+
+#define BADGE_VERSION_MAJOR  0
+#define BADGE_VERSION_MINOR  3
+#define BADGE_VERSION_PATCH  0
+#define BADGE_VERSION_STRING "v0.3.0"
+#define BADGE_BUILD_DATE     __DATE__
+
+#endif /* VERSION_H */

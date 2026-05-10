@@ -1,0 +1,87 @@
+# Kconfig.projbuild — cleaned for ESP-IDF v6.0.1 compatibility
+# LVGL and BT symbols are now managed by their respective components.
+# Values are set in sdkconfig.defaults instead.
+
+menu "Badge Page Selection"
+
+    config PAGE_CARD
+        bool "Page: Card (名片主页)"
+        default y
+        help
+            Always-on main card page with avatar, name, department.
+
+    config PAGE_CALENDAR
+        bool "Page: Calendar (日历)"
+        default y
+        help
+            NI Milestone Calendar with highlighted special dates.
+
+    config PAGE_MILESTONE
+        bool "Page: Milestone (NI历史里程碑)"
+        default y
+        help
+            NI history timeline with animated data flow.
+
+    config PAGE_HISTORY
+        bool "Page: History (卡通故事)"
+        default y
+        help
+            Full-screen cartoon image page.
+
+    config PAGE_DAQ
+        bool "Page: DAQ Dashboard (仪表盘)"
+        default n
+        help
+            Real-time dashboard showing RSSI, temperature, memory, uptime.
+
+    config PAGE_GALLERY
+        bool "Page: NI Gallery (图片画廊)"
+        default y
+        help
+            NI Gallery with NI Logo history and LabVIEW 1.0 screenshots.
+            Enters independent screen for image browsing.
+
+    config PAGE_IMPACT
+        bool "Page: Impact Radar (全球影响力)"
+        default y
+        help
+            Static 5-axis radar chart showing global impact metrics.
+
+    config PAGE_IDENTITY
+        bool "Page: Identity (数字身份/QR)"
+        default y
+        help
+            QR code + orbit animation digital identity page.
+            Warning: uses extra PSRAM for QR bitmap conversion.
+
+    config PAGE_GAME
+        bool "Page: Memory Game (记忆翻牌)"
+        default n
+        help
+            NI product memory card matching game.
+
+    config PAGE_2048
+        bool "Page: 2048 Game"
+        default n
+        help
+            Classic 2048 sliding puzzle game.
+
+    config PAGE_PLAYER
+        bool "Page: Image Player (相册播放)"
+        default n
+        help
+            SD card image slideshow player.
+
+    config PAGE_MATCH3
+        bool "Page: Match-3 (恩了个恩)"
+        default n
+        help
+            NI-themed match-3 puzzle game. Lazy-loaded on first visit.
+
+    config PAGE_CONFIG
+        bool "Page: Config (WiFi配置)"
+        default y
+        help
+            WiFi AP config page with HTTP server for profile/time settings.
+
+endmenu

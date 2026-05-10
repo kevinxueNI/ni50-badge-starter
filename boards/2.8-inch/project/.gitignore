@@ -1,0 +1,18 @@
+# ESP-IDF build output
+build/
+
+# Python
+__pycache__/
+*.pyc
+tools/__pycache__/
+
+# sdkconfig is project-specific but useful to keep
+# sdkconfig.old can be ignored
+sdkconfig.old
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
